@@ -53,7 +53,7 @@ export default function UserList({ onSelectUser }: UserListProps) {
 
     return (
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <h3 style={{ marginBottom: '20px', fontSize: '1.4rem', color: 'white' }}>User Directory</h3>
+            <h3 style={{ marginBottom: '20px', fontSize: '1.4rem', color: 'white' }}>Find People</h3>
 
             <div style={{ marginBottom: '30px' }}>
                 <input
