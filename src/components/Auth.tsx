@@ -107,7 +107,7 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
 
             {authError && (
                 <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
-                    <strong>Security Error:</strong> {authError}
+                    {authError}
                 </div>
             )}
 
