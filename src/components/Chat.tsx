@@ -104,7 +104,12 @@ export default function Chat({ selectedUser: initialUser }: ChatProps) {
                 }
             }));
 
-            setMessages(decryptedMessages);
+            // Sort messages chronologically (oldest first, newest at the bottom)
+            const sortedMessages = decryptedMessages.sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+
+            setMessages(sortedMessages);
         } catch (err: any) {
             console.error("Error fetching messages:", err);
             // Show alert for persistent errors
