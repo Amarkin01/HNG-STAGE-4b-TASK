@@ -20,9 +20,10 @@ interface ChatProps {
         username: string;
         publicKey: string;
     };
+    onBack: () => void;
 }
 
-export default function Chat({ selectedUser: initialUser }: ChatProps) {
+export default function Chat({ selectedUser: initialUser, onBack }: ChatProps) {
     const [selectedUser, setSelectedUser] = useState(initialUser);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -164,6 +165,14 @@ export default function Chat({ selectedUser: initialUser }: ChatProps) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
             {/* Header */}
             <div style={{ padding: '12px 20px', background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <button 
+                    onClick={onBack}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px', borderRadius: '50%', transition: 'background 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#2481cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                     {selectedUser.username[0].toUpperCase()}
                 </div>
@@ -244,11 +253,15 @@ export default function Chat({ selectedUser: initialUser }: ChatProps) {
                         display: 'flex',
                         alignItems: 'center', 
                         justifyContent: 'center', 
-                        fontSize: '20px',
-                        transition: 'transform 0.2s'
+                        transition: 'transform 0.2s',
+                        padding: '10px'
                     }}
                 >
-                    {sending ? '...' : '✈'}
+                    {sending ? '...' : (
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                        </svg>
+                    )}
                 </button>
             </form>
         </div>

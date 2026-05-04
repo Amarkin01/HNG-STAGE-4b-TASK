@@ -16,18 +16,21 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
         e.preventDefault();
         setLoading(true);
 
+        const cleanUsername = username.trim();
+        const cleanPassword = password.trim();
+
         try {
             if (isRegistering) {
                 console.log("Generating RSA Keypair...");
                 const keyPair = await generateRSAKeyPair();
                 console.log("Wrapping keys with password...");
-                const cryptoData = await prepareRegistrationData(keyPair, password);
+                const cryptoData = await prepareRegistrationData(keyPair, cleanPassword);
 
                 console.log("Sending registration to server...");
                 const response = await api.post('/auth/register', {
-                    username,
-                    display_name: username,
-                    password,
+                    username: cleanUsername,
+                    display_name: cleanUsername,
+                    password: cleanPassword,
                     public_key: cryptoData.publicKey,
                     wrapped_private_key: cryptoData.wrappedPrivateKey,
                     pbkdf2_salt: cryptoData.salt
@@ -39,15 +42,20 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                 localStorage.setItem('whisper_public_key', cryptoData.publicKey);
 
             } else {
-                const loginRes = await api.post('/auth/login', { username, password });
-
-                const token = loginRes.data.access_token || loginRes.data.accessToken || loginRes.data.token;
-                localStorage.setItem('whisper_token', token);
+                const loginRes = await api.post('/auth/login', { 
+                    username: cleanUsername, 
+                    password: cleanPassword 
+                });
 
                 const data = loginRes.data;
-                const finalWrapped = data.wrapped_private_key || data.wrappedPrivateKey;
-                const finalSalt = data.pbkdf2_salt || data.salt;
-                const finalPub = data.public_key || data.publicKey;
+                const token = data.access_token || data.accessToken || data.token;
+                localStorage.setItem('whisper_token', token);
+
+                // WhisperBox API nests user data (including keys) inside a 'user' object
+                const userData = data.user || {};
+                const finalWrapped = userData.wrapped_private_key || userData.wrappedPrivateKey;
+                const finalSalt = userData.pbkdf2_salt || userData.salt;
+                const finalPub = userData.public_key || userData.publicKey;
 
                 if (finalPub) {
                     localStorage.setItem('whisper_public_key', finalPub);
@@ -55,15 +63,16 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
 
                 if (finalWrapped && finalSalt) {
                     try {
-                        const privateKey = await unwrapPrivateKey(finalWrapped, password, finalSalt);
+                        console.log("Restoring E2EE keys from server...");
+                        const privateKey = await unwrapPrivateKey(finalWrapped, cleanPassword, finalSalt);
                         await storePrivateKey(privateKey);
                     } catch (err) {
-                        console.error("Unwrap failed:", err);
+                        console.error("Key restoration failed. You might still be able to chat, but history decryption might fail.", err);
                     }
                 }
             }
 
-            onLoginSuccess(username);
+            onLoginSuccess(cleanUsername);
 
         } catch (err: any) {
             console.error("Auth Error Detail:", err.response?.data);

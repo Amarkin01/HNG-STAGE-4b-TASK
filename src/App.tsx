@@ -99,13 +99,7 @@ function App() {
                         <div style={{ flex: 1, display: view === 'chat' ? 'flex' : 'none', flexDirection: 'column', background: 'var(--bg-dark)' }}>
                             {view === 'chat' ? (
                                 <>
-                                    <button
-                                        onClick={() => setView('welcome')}
-                                        style={{ background: 'var(--bg-sidebar)', color: 'var(--accent)', border: 'none', borderBottom: '1px solid var(--border)', padding: '10px 20px', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem' }}
-                                    >
-                                        ← Back to List
-                                    </button>
-                                    <Chat selectedUser={selectedUser} />
+                                    <Chat selectedUser={selectedUser} onBack={() => setView('welcome')} />
                                 </>
                             ) : (
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', color: 'var(--text-dim)' }}>
