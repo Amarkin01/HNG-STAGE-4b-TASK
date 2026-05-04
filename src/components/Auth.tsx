@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../lib/api';
 import { generateRSAKeyPair, prepareRegistrationData, storePrivateKey, unwrapPrivateKey } from '../lib/crypto';
 
@@ -10,14 +11,17 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
     const [isRegistering, setIsRegistering] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setAuthError(null);
 
         const cleanUsername = username.trim();
-        const cleanPassword = password.trim();
+        const cleanPassword = password; // Don't trim password as it might have intentional spaces
 
         try {
             if (isRegistering) {
@@ -42,9 +46,9 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                 localStorage.setItem('whisper_public_key', cryptoData.publicKey);
 
             } else {
-                const loginRes = await api.post('/auth/login', { 
-                    username: cleanUsername, 
-                    password: cleanPassword 
+                const loginRes = await api.post('/auth/login', {
+                    username: cleanUsername,
+                    password: cleanPassword
                 });
 
                 const data = loginRes.data;
@@ -67,7 +71,8 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                         const privateKey = await unwrapPrivateKey(finalWrapped, cleanPassword, finalSalt);
                         await storePrivateKey(privateKey);
                     } catch (err) {
-                        console.error("Key restoration failed. You might still be able to chat, but history decryption might fail.", err);
+                        console.error("Key restoration failed:", err);
+                        // We don't block login, but decryption might fail
                     }
                 }
             }
@@ -80,7 +85,7 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
             const message = Array.isArray(detail) ? detail.map(d => `${d.loc[1]}: ${d.msg}`).join(", ") : detail;
             const errMsg = message || err.response?.data?.message || err.message;
 
-            alert(`Security Node Error: ${errMsg}`);
+            setAuthError(errMsg);
         } finally {
             setLoading(false);
         }
@@ -100,6 +105,12 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                 </p>
             </div>
 
+            {authError && (
+                <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
+                    <strong>Security Error:</strong> {authError}
+                </div>
+            )}
+
             <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>Username</label>
@@ -108,20 +119,29 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
-                        placeholder="e.g. Satoshi"
+                        placeholder="e.g. Amarkin"
                         style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', fontSize: '1rem', boxSizing: 'border-box' }}
                     />
                 </div>
                 <div>
                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        placeholder="••••••••"
-                        style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', fontSize: '1rem', boxSizing: 'border-box' }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            placeholder="••••••••"
+                            style={{ width: '100%', padding: '12px 45px 12px 16px', borderRadius: '10px', fontSize: '1rem', boxSizing: 'border-box' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '18px' }}
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
                 </div>
                 <button
                     type="submit"
@@ -132,12 +152,15 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
                     {loading ? "Processing..." : (isRegistering ? "CREATE ACCOUNT" : "NEXT")}
                 </button>
             </form>
-            
+
             <button
-                onClick={() => setIsRegistering(!isRegistering)}
+                onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setAuthError(null);
+                }}
                 style={{ background: 'transparent', border: 'none', color: '#60a5fa', width: '100%', marginTop: '20px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
             >
-                {isRegistering ? "Already have an account?" : "No account yet? Register"}
+                {isRegistering ? "Already have an account? Login" : "No account yet? Register"}
             </button>
         </div>
     );
